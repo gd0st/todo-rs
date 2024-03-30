@@ -1,13 +1,13 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
-enum State {
+pub enum State {
     Complete,
     Started,
     Stopped,
 }
 
-struct TodoList {
+pub struct TodoList {
     name: String,
     todos: Vec<Todo>,
 }
@@ -29,7 +29,7 @@ impl TodoList {
     }
 }
 
-struct Todo {
+pub struct Todo {
     subject: String,
     status: State,
 }
@@ -59,9 +59,6 @@ impl Todo {
     pub fn pause(self) -> Self {
         Self::new(&self.subject)
     }
-}
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
 }
 
 #[cfg(test)]
