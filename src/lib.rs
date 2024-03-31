@@ -1,35 +1,57 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum State {
     Complete,
     Started,
     Stopped,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct TodoList {
     name: String,
-    todos: Vec<Todo>,
+    todos: HashMap<usize, Todo>,
 }
 
 impl TodoList {
-    fn new(name: &str) -> Self {
+    pub fn new(name: &str) -> Self {
         Self {
             name: name.to_string(),
-            todos: vec![],
+            todos: HashMap::new(),
         }
     }
 
-    fn new_todo(&mut self, subject: &str) {
-        self.todos.push(Todo::new(subject))
+    pub fn add(&mut self, todo: Todo) {
+        let key: usize = self.todos.values().len() + 1;
+
+        self.todos.insert(key, todo.id(key));
     }
 
-    fn get(&self, subject: &str) -> Option<&Todo> {
-        self.todos.iter().find(|todo| todo.subject == subject)
+    pub fn get(&self, id: usize) -> Option<&Todo> {
+        self.todos.get(&id)
+    }
+
+    pub fn complete(&mut self, id: usize) {
+        if let Some(todo) = &mut self.todos.get(&id) {
+            todo.complete();
+        }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &Todo> {
+        self.todos.values()
     }
 }
 
+impl From<&str> for Todo {
+    fn from(value: &str) -> Self {
+        Todo::new(value)
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Todo {
+    id: Option<usize>,
     subject: String,
     status: State,
 }
@@ -37,9 +59,22 @@ pub struct Todo {
 impl Todo {
     pub fn new(subject: &str) -> Self {
         Self {
+            id: None,
             subject: subject.to_string(),
             status: State::Stopped,
         }
+    }
+
+    pub fn id(self, id: usize) -> Self {
+        Self {
+            id: Some(id),
+            subject: self.subject,
+            status: self.status,
+        }
+    }
+
+    pub fn subject(&self) -> String {
+        self.subject.to_string()
     }
 
     pub fn complete(self) -> Self {
@@ -68,10 +103,19 @@ mod tests {
     #[test]
     fn make_todo_add_to_list_and_find() {
         let mut todo_list = TodoList::new("My first list");
-        todo_list.new_todo("dishes");
-
-        if let Some(todo) = todo_list.get("dishes") {
-            assert_eq!(todo.subject, "dishes".to_string())
+        let todo = Todo::from("Dishes");
+        todo_list.add(todo);
+    }
+    #[test]
+    fn find_todo() {
+        let mut todo_list = TodoList::new("My first list");
+        let todo = Todo::from("Dishes");
+        todo_list.add(todo);
+        println!("{:?}", todo_list);
+        if let Some(found_todo) = todo_list.get("Dishes") {
+            assert_eq!(found_todo.subject(), "Dishes".to_string())
+        } else {
+            assert!(false)
         }
     }
 
@@ -80,11 +124,5 @@ mod tests {
         let todo = Todo::new("dishes").start().pause().complete();
 
         assert_eq!(todo.subject, "dishes".to_string())
-    }
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
     }
 }
