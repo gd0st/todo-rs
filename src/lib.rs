@@ -33,8 +33,8 @@ impl TodoList {
     }
 
     pub fn complete(&mut self, id: usize) {
-        if let Some(todo) = &mut self.todos.get(&id) {
-            todo.complete();
+        if let Some(todo) = self.todos.remove(&id) {
+            self.add(todo.complete())
         }
     }
 
@@ -79,6 +79,7 @@ impl Todo {
 
     pub fn complete(self) -> Self {
         Self {
+            id: self.id,
             subject: self.subject,
             status: State::Complete,
         }
@@ -86,6 +87,7 @@ impl Todo {
 
     pub fn start(self) -> Self {
         Self {
+            id: self.id,
             subject: self.subject,
             status: State::Started,
         }
@@ -112,7 +114,7 @@ mod tests {
         let todo = Todo::from("Dishes");
         todo_list.add(todo);
         println!("{:?}", todo_list);
-        if let Some(found_todo) = todo_list.get("Dishes") {
+        if let Some(found_todo) = todo_list.get(0) {
             assert_eq!(found_todo.subject(), "Dishes".to_string())
         } else {
             assert!(false)
